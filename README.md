@@ -24,3 +24,13 @@ Lab 3: This exercise is predominantly concerned with Hopfield networks and assoc
 -Demonstrate how autoassociative networks can do pattern completion and noise reduction.
 
 -Investigate the question of storage capacity  and explain features that help in creasing it in associative memories.
+
+Lab 4: The main idea behind this exercise is to get familiar with with some of the key ingredients of deep neural network (DNN) architectures. The focus is on restricted Boltzmann machines(RBMs)and autoencoders. The main objectives are:
+
+-Explaining key ideas underlying the learning process of RBMs and autoencoders.
+
+-Applying basic algorithms for greedy training of RBM and autoencoder layers with the use of commonly available deep learning libraries.
+
+-Designing multi-layer neuralnetwork architectures based on RBM and autoencoders. for classification problems.
+
+-Studying the functionality (including generative aspects) and test the performance of low-scale deep architectures developed using RBMs(deep belief networks,DBNs)and autoencoders.
