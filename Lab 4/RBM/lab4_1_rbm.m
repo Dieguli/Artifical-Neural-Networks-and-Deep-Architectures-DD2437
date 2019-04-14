@@ -1,0 +1,133 @@
+clc
+%clear all
+close all
+
+load('../binMNIST_data/binMNIST.mat');
+
+num_visible = 784;
+trained = 0;
+num_hidden = 75;
+learning_rate = 0.1;
+max_epochs = 1000;
+
+rbmbb = randRBM(num_visible,num_hidden);
+
+% Train the machine.
+% Parameters
+% ----------
+% data: A matrix where each row is a training example consisting of the states of visible units.    
+% 
+num_examples = size(bindata_trn,1);
+data = bindata_trn;
+
+% # Insert bias units of 1 into the first column.
+%data = [ones(size(data,1),1) , data];
+ 
+if (trained ~= 1)
+    W = rbmbb.W;
+    average_error = zeros(max_epochs,1);
+    for epoch =1:max_epochs      
+    %   # Clamp to the data and sample from the hidden units. 
+    %   # (This is the "positive CD phase", aka the reality phase.)
+        pos_hidden_activations = data*W;
+        pos_hidden_probs = sigmoid(pos_hidden_activations);
+        %pos_hidden_probs(:,1) = 1; %# Fix the bias unit, che è la prima colonna
+        pos_hidden_states = pos_hidden_probs > rand(num_examples, num_hidden); % + 1);
+    %   # Note that we're using the activation *probabilities* of the hidden states, not the hidden states       
+    %   # themselves, when computing associations. We could also use the states; see section 3 of Hinton's 
+    %   # "A Practical Guide to Training Restricted Boltzmann Machines" for more.
+        pos_associations = data' * pos_hidden_probs;
+    % 
+    %   # Reconstruct the visible units and sample again from the hidden units.
+    %   # (This is the "negative CD phase", aka the daydreaming phase.)
+        neg_visible_activations = pos_hidden_states * W';
+        neg_visible_probs = sigmoid(neg_visible_activations);
+        %neg_visible_probs(:,1) = 1; %# Fix the bias unit.
+        neg_hidden_activations = neg_visible_probs * W;
+        neg_hidden_probs = sigmoid(neg_hidden_activations);
+    %   # Note, again, that we're using the activation *probabilities* when computing associations, not the states 
+    %   # themselves.
+        neg_associations = neg_visible_probs' * neg_hidden_probs;
+
+    %   # Update weights.
+        W = W + learning_rate*((pos_associations - neg_associations) / num_examples);
+
+        error = sum((data - neg_visible_probs).^2 ,2);
+        average_error(epoch) = sum(error)/length(error);
+    %   if self.debug_print:
+    %     print("Epoch %s: error is %s" % (epoch, error))
+    end
+    save('weigths.mat','W','average_error','trained','num_examples','data','num_hidden','num_visible','learning_rate','max_epochs');
+end
+figure()
+plot(average_error)
+grid on
+title('Error over epochs')
+print([num2str(num_hidden) '_average_error_epochs'],'-dpng')
+%
+% clear all
+load('weigths.mat')
+close all
+% load('binMNIST_data/binMNIST.mat');
+
+rbmbb.W = W;
+
+max_num = max(digtargets_tst);
+min_num = min(digtargets_tst);
+
+for digit=min_num:max_num
+    b = length(digtargets_tst);
+    a = 1;
+    r = a + (b-a).*randi(1,1);  
+    while (digit ~= digtargets_tst(r))
+        r = randi(b,1);
+    end
+    
+    data = bindata_tst(r,:);
+    %compute the reconstruction performed by the RBM
+    pos_hidden_activations = data*W;
+    pos_hidden_probs = sigmoid(pos_hidden_activations);
+    pos_hidden_states = pos_hidden_probs > rand(1, num_hidden);
+    neg_visible_activations = pos_hidden_states * W';
+    neg_visible_probs = sigmoid(neg_visible_activations);
+    neg_hidden_activations = neg_visible_probs * W;
+    neg_hidden_probs = sigmoid(neg_hidden_activations);
+    reconstructed = neg_visible_probs;
+    
+    figure(digit+1)
+    title(['Number ' digit])
+    grid on
+        subplot(1,2,1)
+        imshow((reshape(data,28,28))')
+        title('Original data')
+        subplot(1,2,2)
+        imshow((reshape(reconstructed,28,28))')
+        title('Reconstructed data')   
+    print([num2str(num_hidden) '_number_' num2str(digit) '_reconstructed'], '-dpng')    
+end
+
+
+%% PLOT the 784 weights for each hidden unit
+
+    
+
+W_matrix = rbmbb.W;
+figure
+grid on
+a = sqrt(size(W_matrix,1)); % a = 28
+num_nodes = size(W_matrix,2); %num_nudes = num_hidden
+    for r=1:num_nodes
+        subplot(ceil(sqrt(num_nodes))+1,floor(sqrt(num_nodes)),r)
+        imshow((reshape(W_matrix(:,r),a,a))')
+        %title(num2str(r))
+    end
+set(gcf, 'Position', get(0, 'Screensize'));
+print([num2str(num_hidden) '_weight_img'], '-dpng', '-r0')  
+    
+
+
+
+
+
+
+
